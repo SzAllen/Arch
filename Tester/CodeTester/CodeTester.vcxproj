@@ -50,7 +50,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;XDEBUG;WIN_32;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;FETCH_DEV_INFO</PreprocessorDefinitions>
+      <PreprocessorDefinitions>CONFIG_PFSOCKET;CONFIG_CMDLINE;WIN32;_WINDOWS;_DEBUG;XDEBUG;WIN_32;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;FETCH_DEV_INFO</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\Arch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <StructMemberAlignment>Default</StructMemberAlignment>
     </ClCompile>
@@ -103,13 +103,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Arch\Arch.h" />
+    <ClInclude Include="..\..\Arch\ArchDef.h" />
+    <ClInclude Include="..\..\Arch\CmdLine.h" />
     <ClInclude Include="..\..\Arch\Debug.h" />
-    <ClInclude Include="..\..\Arch\Global.h" />
     <ClInclude Include="..\..\Arch\List.h" />
     <ClInclude Include="..\..\Arch\Message.h" />
     <ClInclude Include="..\..\Arch\PfSocket.h" />
     <ClInclude Include="..\..\Arch\Printf.h" />
     <ClInclude Include="..\..\Arch\queue.h" />
+    <ClInclude Include="..\..\Arch\Shell.h" />
+    <ClInclude Include="..\..\Arch\Str.h" />
     <ClInclude Include="..\..\Arch\SwTimer.h" />
     <ClInclude Include="..\..\Arch\typedef.h" />
     <ClInclude Include="CodeTester.h" />
@@ -123,22 +126,25 @@
     <ClInclude Include="CaseTreeData.h" />
     <ClInclude Include="Tester.h" />
     <ClInclude Include="TreeNodeData.h" />
-    <ClInclude Include="WgTester.h" />
+    <ClInclude Include="ArchTester.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Arch\Arch.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\..\Arch\debug.c">
+    <ClCompile Include="..\..\Arch\CmdLine.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\..\Arch\Global.c">
+    <ClCompile Include="..\..\Arch\debug.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\Arch\List.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\Arch\Message.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\Arch\Osa.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\Arch\PfSocket.c">
@@ -148,6 +154,12 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\Arch\queue.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\Arch\Shell.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\Arch\Str.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\Arch\SwTimer.c">
@@ -165,7 +177,7 @@
     <ClCompile Include="CaseTreeData.cpp" />
     <ClCompile Include="Tester.cpp" />
     <ClCompile Include="TreeNodeData.cpp" />
-    <ClCompile Include="WgTester.cpp" />
+    <ClCompile Include="ArchTester.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="BmcTester.rc" />

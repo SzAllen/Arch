@@ -45,7 +45,8 @@ extern "C"
 {
 	#include "typedef.h"
 	#include "Debug.h"
-
+	#include "CmdLine.h"
+	#include "Shell.h"
 }
 
 extern int MyTrace(LPSTR lpszFormat, ...);

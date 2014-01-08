@@ -63,16 +63,10 @@
     <ClInclude Include="CodeTesterDlg.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="WgTester.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Arch\Arch.h">
       <Filter>ArchCode</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Arch\Debug.h">
-      <Filter>ArchCode</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Arch\Global.h">
       <Filter>ArchCode</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Arch\List.h">
@@ -94,6 +88,21 @@
       <Filter>ArchCode</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Arch\typedef.h">
+      <Filter>ArchCode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Arch\CmdLine.h">
+      <Filter>ArchCode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Arch\Shell.h">
+      <Filter>ArchCode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Arch\Str.h">
+      <Filter>ArchCode</Filter>
+    </ClInclude>
+    <ClInclude Include="ArchTester.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Arch\ArchDef.h">
       <Filter>ArchCode</Filter>
     </ClInclude>
   </ItemGroup>
@@ -125,16 +134,10 @@
     <ClCompile Include="CodeTesterDlg.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="WgTester.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Arch\Arch.c">
       <Filter>ArchCode</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Arch\debug.c">
-      <Filter>ArchCode</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Arch\Global.c">
       <Filter>ArchCode</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Arch\List.c">
@@ -153,6 +156,21 @@
       <Filter>ArchCode</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Arch\SwTimer.c">
+      <Filter>ArchCode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Arch\CmdLine.c">
+      <Filter>ArchCode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Arch\Shell.c">
+      <Filter>ArchCode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Arch\Str.c">
+      <Filter>ArchCode</Filter>
+    </ClCompile>
+    <ClCompile Include="ArchTester.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Arch\Osa.c">
       <Filter>ArchCode</Filter>
     </ClCompile>
   </ItemGroup>
