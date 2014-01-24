@@ -96,8 +96,8 @@ extern "C"{
 
 	#define SHELL(x) Printf x
 	
-	#define Warning(x) PF(DL_WARNING, x);
-	#define Error(x) PF(DL_ERROR, x);
+	#define PF_WARNING(x) 	PF(DL_WARNING, x);
+	#define PF_ERROR(x) 	PF(DL_ERROR, x);
 
 	#define PF_FUN(level) PF(level, ("%s(),line=%d\n",_FUNC_, _LINE_));
 	#define PF_LINE(level) PF(level, ("PF Line. %s,%s(),line=%d\n", __FILE__,__FUNCTION__,_LINE_))
@@ -122,8 +122,8 @@ extern "C"{
 	#define AssertTrue(...)
 	#define AssertFalse(...)
 	#define Trace(...)
-	#define Warning(...)
-	#define Error(...)
+	#define PF_WARNING(...)
+	#define PF_ERROR(...)
 	
 	#define PF(...)
 	#define PF_FUN(...)

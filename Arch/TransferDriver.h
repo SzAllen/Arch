@@ -1,8 +1,8 @@
 #ifndef  _TRANSFER_DRIVER_H_
 #define  _TRANSFER_DRIVER_H_
 
-#ifdef _cplusplus
-extern "c"{
+#ifdef __cplusplus
+extern "C"{
 #endif
 
 #include "typedef.h"
@@ -39,7 +39,7 @@ void Transfer_RxData(Transfer* pTransfer, uint8* pData, uint16 len);
 void Transfer_Init(Transfer* pTransfer, struct _tagChnl* pChnl);
 
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 }
 #endif
 

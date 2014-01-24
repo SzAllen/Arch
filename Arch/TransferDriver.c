@@ -14,7 +14,7 @@ TX_CODE Transfer_TxData(Transfer* pTransfer, uint8* pData, uint16 len)
 void Transfer_RxDataCallBack(Transfer* pTransfer, uint8* pData, uint16 len)
 {
 	Assert(pTransfer->m_pChnl);
-	Chnl_RxData(pTransfer->m_pChnl, EVENT_RX_SUCCESS, pData, len);
+	Chnl_Event(pTransfer->m_pChnl, EVENT_RX_SUCCESS, pData, len);
 }
 
 void Transfer_Init(Transfer* pTransfer, Chnl* pChnl)

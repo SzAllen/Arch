@@ -7,6 +7,8 @@ extern "C"{
 
 int htoi(const char *s);
 
+char* inet_n2a(unsigned int ipAddr);
+
 #ifdef CONFIG_STRING
 const char* strchr(const char* s, char c);
 #endif
