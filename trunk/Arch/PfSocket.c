@@ -25,7 +25,7 @@ void PfSocket_task(void * pArg)
     hSocket = socket( AF_INET, SOCK_DGRAM, 0 );                          
     if(INVALID_SOCKET == hSocket)
     {
-		PF(DL_WARNING, ("PfSocket create failed, port=%d.\n", pPfSocket->m_RxPort));
+		PF_WARNING(("PfSocket create failed, port=%d.\n", pPfSocket->m_RxPort));
 		return;
     }
 	else
@@ -41,7 +41,7 @@ void PfSocket_task(void * pArg)
 		i = bind(hSocket, (struct sockaddr *)&server, sizeof( server ));
 	    if(0 != i)
 	    {
-			PF(DL_WARNING, ("PfSocket bind failed, port=%d, ret=%d.\n", pPfSocket->m_RxPort, i));
+			PF_WARNING(("PfSocket bind failed, port=%d, ret=%d.\n", pPfSocket->m_RxPort, i));
 			return;
 	    }
 	}

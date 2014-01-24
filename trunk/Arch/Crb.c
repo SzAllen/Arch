@@ -2,6 +2,7 @@
 #include "Crb.h"
 #include "Debug.h"
 #include "Global.h"
+#include "Chnl.h"
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -9,7 +10,7 @@ void Crb_TimerOut(SwTimer* pTimer, Crb* pCrb)
 {
 	Chnl* pChnl = pCrb->m_pChnl;
 		
-	if(CRB_TX_REQ_SUCCESS == pCrb->m_State
+	if(CRB_WAIT_RSP == pCrb->m_State
 		|| CRB_RX_REQ_SUCCESS == pCrb->m_State
 		|| CRB_TX_REQ == pCrb->m_State
 		|| CRB_TX_RSP == pCrb->m_State
@@ -19,7 +20,7 @@ void Crb_TimerOut(SwTimer* pTimer, Crb* pCrb)
 	}
 }
 
-void Crb_ConfigRsp(Crb* pCrb, CmdItem* pCmd)
+void Crb_ConfigRsp(Crb* pCrb, DataPkt* pCmd)
 {
 	pCrb->m_MaxSendCount = 1;
 	
@@ -29,7 +30,7 @@ void Crb_ConfigRsp(Crb* pCrb, CmdItem* pCmd)
 
 static Bool Crb_SendCmdReq(Crb* pCrb, CmdReq* pCmdReq)
 {
-	const PacketDesc* pPacketDesc = Crb_GetPacketDesc(pCrb);
+	const PktDesc* pPktDesc = Crb_GetPktDesc(pCrb);
 
 	pCrb->m_State 		= CRB_READY;
 	pCrb->m_ErrorCode 	= CRB_NO_ERROR;
@@ -38,24 +39,23 @@ static Bool Crb_SendCmdReq(Crb* pCrb, CmdReq* pCmdReq)
 	pCrb->m_RspCmd.m_isUsed = 0;
 
 	pCrb->m_MaxSendCount 	= pCmdReq->m_reSendCounter;
-	pCrb->m_DelayMsForRsp 	= pCmdReq->m_DelayMsForRsp;
 	
 	pCrb->m_ReqCmd.m_isUsed = 1;
-	memcpy(&pCrb->m_ReqCmd.m_pCmd, pCmdReq->m_Data, pCmdReq->m_Len);
-	pCrb->m_ReqCmd.m_CmdLen = pCmdReq->m_Len;
+	memcpy(&pCrb->m_ReqCmd.m_pData, pCmdReq->m_pData, pCmdReq->m_Len);
+	pCrb->m_ReqCmd.m_DataLen = pCmdReq->m_Len;
 	
+	pCrb->CmdPacket(pCrb);
 	return Chnl_SendCrb(pCrb->m_pChnl, pCrb);
 }
 
-static Bool Crb_PushQueue(Crb* pCrb, uint8* pData, int nLen, uint8 reSendCount, uint32 nDelayMsForRsp, CrbNotifyFun CrbDone, void* pRequester)
+static Bool Crb_PushQueue(Crb* pCrb, uint8* pData, int nLen, uint8 reSendCount, CrbNotifyFun CrbDone, void* pRequester)
 {
 	Queue* pReqDataQueue = &pCrb->m_CmdPacketQueue;
-	const PacketDesc* pPacketDesc = Crb_GetPacketDesc(pCrb);
+	const PktDesc* pPktDesc = Crb_GetPktDesc(pCrb);
 	
-	Assert(pCrb->m_pCmdReq->m_Len < pPacketDesc->m_MaxLen);
+	Assert(pCrb->m_pCmdReq->m_Len < pPktDesc->m_MaxLen);
 	
 	pCrb->m_pCmdReq->m_reSendCounter 	= reSendCount;
-	pCrb->m_pCmdReq->m_DelayMsForRsp	= nDelayMsForRsp;
 	pCrb->m_pCmdReq->Done 				= CrbDone;
 	pCrb->m_pCmdReq->m_pRequester 		= pRequester;
 	pCrb->m_pCmdReq->m_Len 				= nLen;
@@ -64,22 +64,97 @@ static Bool Crb_PushQueue(Crb* pCrb, uint8* pData, int nLen, uint8 reSendCount, 
 	return QUEUE_add(pReqDataQueue, pCrb->m_pCmdReq, nLen);
 }
 
-Bool Crb_SendReq(Crb* pCrb, uint8* pData, int nLen, uint8 reSendCount, uint32 nDelayMsForRsp, CrbNotifyFun CrbDone, void* pRequester)
+Bool Crb_PushIn(Crb* pCrb, uint8* pData, int len)
+{
+	Chnl* pChnl = Null;
+	Bool isReq = Null;
+	DataPkt* pDataPkt = Null;
+	int nRet = CHNL_SUCCESS;
+
+	Assert(pCrb->m_pChnl);
+	Assert(pChnl->m_pPktDesc);
+	Assert(pChnl->m_pPktDesc->IsReq);
+	
+	pChnl = pCrb->m_pChnl;
+	isReq = pChnl->m_pPktDesc->IsReq(pData, len);
+	
+	PF(DL_CHNL,("Chnl[%d] Crb[%d] Received %s, len=%d: ", pChnl->m_ChannelD, isReq ? "REQ" : "RSP", len));
+	
+	if(isReq)
+	{
+		pDataPkt = &pCrb->m_ReqCmd;
+		if(pDataPkt->m_isUsed)
+		{
+			PF_WARNING(("Busy.\n"));
+			//IpmiHeader_Dump(&header, DL_WARNING, _FUNC_, _LINE_);
+			nRet = CHNL_BUSY;
+		}
+		else if(pChnl->m_pPktDesc->m_MaxLen >= len)
+		{
+			memcpy(pDataPkt->m_pData, pData, len);
+			pDataPkt->m_DataLen = len;
+			
+			pDataPkt->m_isUsed = True;
+			Chnl_PostMsg(pChnl, CHNL_RX_SUCCESS, (uint32)pCrb, 0);
+		}
+		else
+		{
+			PF_WARNING(("%s,line=%d, Data len(=%d) is too long, discard.\n", _FUNC_, _LINE_, len));
+			nRet = CHNL_VERIFY_FAILED;
+		}
+	}
+	else
+	{
+		pDataPkt = &pCrb->m_RspCmd;
+		if(pDataPkt->m_isUsed)
+		{
+			PF_WARNING(("%s,line=%d, Unexpected Response, discard.\n", _FUNC_, _LINE_));
+			//IpmiHeader_Dump(&header, DL_WARNING, _FUNC_, _LINE_);
+			nRet = CHNL_DISCARD;
+		}
+		else if(pChnl->m_pPktDesc->IsRspForReq(&pCrb->m_ReqCmd.m_pData, pCrb->m_ReqCmd.m_DataLen, pData, len))
+		{
+			if(pChnl->m_pPktDesc->m_MaxLen >= len)
+			{
+				memcpy(pDataPkt->m_pData, pData, len);
+				pDataPkt->m_DataLen = len;
+				pDataPkt->m_isUsed = True;
+				Chnl_PostMsg(pChnl, CHNL_RX_SUCCESS, (uint32)pCrb, 0);
+			}
+			else
+			{
+				PF_WARNING(("%s,line=%d, Data len(=%d) is too long, discard.\n", _FUNC_, _LINE_, len));
+				nRet = CHNL_VERIFY_FAILED;
+			}
+		}
+		else
+		{
+			//IpmiHeader_Dump(&pCrb->m_pReqCmd->m_Header,DL_MAIN,  Null, 0);
+			//IpmiHeader_Dump(&header, DL_MAIN, Null, 0);
+			PF_WARNING(("%s,line=%d, Unexpected Response, discard.\n", _FUNC_, _LINE_));
+			nRet = CHNL_DISCARD;
+		}
+	}
+
+	return nRet;
+}
+
+Bool Crb_SendReq(Crb* pCrb, uint8* pData, int nLen, uint8 reSendCount, CrbNotifyFun CrbDone, void* pRequester)
 {	
 	if(!Crb_isIdle(pCrb)) return False;
 
-	return Crb_PostReq(pCrb, pData, nLen, reSendCount, nDelayMsForRsp, CrbDone, pRequester);
+	return Crb_PostReq(pCrb, pData, nLen, reSendCount, CrbDone, pRequester);
 }
 
-Bool Crb_PostReq(Crb* pCrb, uint8* pData, int nLen, uint8 reSendCount, uint32 nDelayMsForRsp, CrbNotifyFun CrbDone, void* pRequester)
+Bool Crb_PostReq(Crb* pCrb, uint8* pData, int nLen, uint8 reSendCount, CrbNotifyFun CrbDone, void* pRequester)
 {
 	Queue* pReqDataQueue = &pCrb->m_CmdPacketQueue;
-	const PacketDesc* pPacketDesc = Crb_GetPacketDesc(pCrb);
+	const PktDesc* pPktDesc = Crb_GetPktDesc(pCrb);
 	
-	if(pPacketDesc->m_MaxLen < nLen) return False;
+	if(pPktDesc->m_MaxLen < nLen) return False;
 	if(QUEUE_isFull(pReqDataQueue)) return False;
 
-	Crb_PushQueue(pCrb, pData, nLen, reSendCount, nDelayMsForRsp, CrbDone, pRequester);
+	Crb_PushQueue(pCrb, pData, nLen, reSendCount, CrbDone, pRequester);
 
 	if(Crb_isIdle(pCrb))
 	{
@@ -101,14 +176,9 @@ Bool Crb_isIdle(Crb* pCrb)
 	return pCrb->m_State == CRB_INIT;
 }
 
-const PacketDesc* Crb_GetPacketDesc(Crb* pCrb)
+const PktDesc* Crb_GetPktDesc(Crb* pCrb)
 {
-	return pCrb->m_pChnl->m_pPacketDesc;
-}
-
-RSP_CODE Crb_CmdDisptch(Crb* pCrb)
-{
-	return RSP_FAILED;
+	return pCrb->m_pChnl->m_pPktDesc;
 }
 
 void Crb_Done(Crb* pCrb)
@@ -158,11 +228,6 @@ Bool Crb_IsMatch(Crb* pCrb, uint8* pCmdData)
 	return True;
 }
 
-int Crb_Send(Crb* pCrb)
-{
-	return Chnl_SendCrb(pCrb->m_pChnl, pCrb);
-}
-
 void Crb_Reset(Crb* pCrb)
 {	
 	Queue* pReqDataQueue = &pCrb->m_CmdPacketQueue;
@@ -197,87 +262,89 @@ void Crb_Reset(Crb* pCrb)
 
 void Crb_Release(Crb* pCrb)
 {
-	CmdItem* pCmd = Null;
-	
 	pCrb->Reset(pCrb);
-
-	free(pCrb->m_ReqCmd.m_pCmd);
-	free(pCrb->m_RspCmd.m_pCmd);
-	free(pCrb->m_pCmdReq);
-	free(pCrb->m_CmdPacketQueue.m_pBuffer);
-	
-	SwTimer_Release(&pCrb->m_Timer);
-	
 	Chnl_UnAttachCrb(pCrb->m_pChnl, pCrb);
 	
-	memset(pCrb, 0, sizeof(Crb));
+	SwTimer_Release(&pCrb->m_Timer);
+
+	free(pCrb->m_ReqCmd.m_pData);
+	free(pCrb->m_RspCmd.m_pData);
 	
+	if(pCrb->m_pReqBuf)
+	{
+		free(pCrb->m_pReqBuf);
+	}
+	
+	if(pCrb->m_CmdPacketQueue.m_nBufferSize)
+	{
+		free(pCrb->m_CmdPacketQueue.m_pBuffer);
+	}
+	
+	memset(pCrb, 0, sizeof(Crb));	
 }
 
-void Crb_Init(Crb* pCrb
-	, uint16 			maxCmdCount		//命令队列可以存储最大命令个数
-	, TimerManager* 	pTimerManager
-	, struct _tagChnl* 	pChnl
-	, Bool 				isForSendReq
-	, void*				pDisptchObj
-	)
+void Crb_Init(Crb* pCrb, uint16 maxReqCount, Chnl* pChnl, TimerManager* pTm, Bool isForSendReq)
 {
-	uint8* pBuff = Null;
-	CmdItem* pCmd = Null;
+	int i = 0;
+	DataPkt* pCmd = Null;
 	uint16 nLen = 0;
-	const PacketDesc* 	pPacketDesc = pChnl->m_pPacketDesc;
+	uint16	cmdSize = 0;
+	uint8*	pBuf = Null;
+	int nIndex = 0;
+	CmdReq* pCmdReq = Null;
 
-	Assert(pPacketDesc);
-	Assert(maxCmdCount >= 2);
+	memset(pCrb, 0, sizeof(Crb));
+
+	Assert(pCrb->m_pChnl);
+	Assert(pCrb->m_pChnl->m_pPktDesc);
+
+	cmdSize = pCrb->m_pChnl->m_pPktDesc.m_MaxLen;
+	Assert(cmdSize > 0);
 	
 	pCrb->m_State 	= CRB_INIT;
 	pCrb->m_pChnl = pChnl;
 	pCrb->m_IsForSendReq = isForSendReq;
-	pCrb->m_pDisptchObj = pDisptchObj;
 
-	//初始化定时器
-	SwTimer_Init(&pCrb->m_Timer, (TimeoutFun)Crb_TimerOut, pCrb);
-	Timermanager_AddTimer(pTimerManager, &pCrb->m_Timer);
-	
+	//初始化ReqCmd和RspCmd
+	pCmd = &pCrb->m_ReqCmd;
+	pBuf = (uint8*)malloc(cmdSize);
+	Assert(pBuf);
+	memset(pBuf, 0, cmdSize);
+	DataPkt_Init(pCmd, pBuf, cmdSize);
+
+	pCmd = &pCrb->m_RspCmd;
+	pBuf = (uint8*)malloc(cmdSize);
+	Assert(pBuf);
+	memset(pBuf, 0, cmdSize);
+	DataPkt_Init(pCmd, pBuf, cmdSize);
+
+	if(maxReqCount > 0)
+	{
+		pCrb->m_pReqBuf = (uint8*)malloc(cmdSize * maxReqCount);
+		Assert(pCrb->m_pReqBuf);
+		memset(pCrb->m_pReqBuf, 0, cmdSize * maxReqCount);
+		
+		pCmdReq = (CmdReq*)malloc(sizeof(CmdReq) * maxReqCount);
+		Assert(pCmdReq);
+		memset(pCmdReq, 0, sizeof(CmdReq) * maxReqCount);
+		
+		for(i = 0; i < maxReqCount; i++)
+		{
+			pCmdReq[i].m_pData = &pCrb->m_pReqBuf[nIndex];
+			nIndex += cmdSize;
+		}
+	}
+	QUEUE_init(&pCrb->m_CmdPacketQueue, pCmdReq, sizeof(CmdReq), maxReqCount);
+
 	Chnl_AttachCrb(pChnl, pCrb);
 	
-	//初始化ReqCmd和RspCmd
-	{
-
-		pCmd = &pCrb->m_ReqCmd;
-		pBuff = (uint8*)malloc(pPacketDesc->m_MaxLen);
-		Assert(pBuff);
-		CmdItem_Init(pCmd, pBuff, pPacketDesc->m_MaxLen);
-
-		pCmd = &pCrb->m_RspCmd;
-		pBuff = (uint8*)malloc(pPacketDesc->m_MaxLen);
-		Assert(pBuff);
-		CmdItem_Init(pCmd, pBuff, pPacketDesc->m_MaxLen);
-		
-	}
-
-	//初始化命令队列
-	nLen = pPacketDesc->m_MaxLen + sizeof(CmdReq);
-	pCrb->m_pCmdReq = (CmdReq*)malloc(nLen);
-	Assert(pCrb->m_pCmdReq);
+	//初始化定时器
+	SwTimer_Init(&pCrb->m_Timer, (TimeoutFun)Crb_TimerOut, pCrb);
+	TimerManager_AddTimer(pTm, &pCrb->m_Timer);
 	
-	if(maxCmdCount)
-	{
-		pBuff = (uint8*)malloc(nLen * maxCmdCount);
-		Assert(pBuff);
-	}
-
-	else
-	{
-		pBuff = Null;
-		nLen = 0;
-	}
-	QUEUE_init(&pCrb->m_CmdPacketQueue, pBuff, nLen, maxCmdCount);
-
 	pCrb->IsMatch 	= Crb_IsMatch;
 	pCrb->CrbDone 	= Crb_Done;
 	pCrb->Reset 	= Crb_Reset;
-	pCrb->Disptch 	= (CmdDisptchFun)Crb_CmdDisptch;
 }
 
 void Crb_VerifyReset(Crb* pCrb)

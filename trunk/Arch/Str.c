@@ -1,4 +1,5 @@
 
+#include "Arch.h"
 #include "Str.h"
 
 int htoi(const char *s)
@@ -23,6 +24,16 @@ int htoi(const char *s)
 		s++;
 	}
 	return n;
+}
+
+char* inet_n2a(uint32 ipAddr)
+{
+	static char ipStr[16];
+	
+	memset(ipStr, 0, sizeof(ipStr));
+	sprintf(ipStr, "%d.%d.%d.%d",  MEM_BYTE(ipAddr, 0), MEM_BYTE(ipAddr, 1), MEM_BYTE(ipAddr, 2), MEM_BYTE(ipAddr, 3));
+	
+	return ipStr;
 }
 
 #ifdef CONFIG_STRING

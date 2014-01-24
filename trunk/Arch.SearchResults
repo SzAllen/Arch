@@ -1,7 +1,2 @@
----- CONFIG_PFSOCKET Matches (6 in 5 files) ----
-ArchDef.h (arch):#ifdef CONFIG_PFSOCKET
-PfSocket.c (arch):#if CONFIG_PFSOCKET
-PfSocket.h (arch):#if CONFIG_PFSOCKET
-Printf.c (arch):#if CONFIG_PFSOCKET
-Printf.c (arch):#if CONFIG_PFSOCKET
-Printf.h (arch):#if CONFIG_PFSOCKET
+---- Crb_CmdDisptch Matches (1 in 1 files) ----
+Crb.c (arch):RSP_CODE Crb_CmdDisptch(Crb* pCrb)
