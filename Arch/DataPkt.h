@@ -17,7 +17,7 @@ typedef enum _RSP_CODE
 }RSP_CODE;
 
 typedef Bool (*PktDescIsFun)(void* pCmdBuff, int16 nLen);
-typedef Bool (*PktDescIsRspForReq)(void* pReq, int16 nReqLen, void* pRsp, int16 nRspLen);
+typedef Bool (*PktDescIsRspForReq)(void* pReq, void* pRsp);
 //命令数据包描述符，一个命令数据包可能包括3部分 [命令头][命令数据][命令尾(校验)]
 //下面分别描述三部分的长度
 typedef struct _tagPktDesc

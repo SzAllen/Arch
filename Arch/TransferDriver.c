@@ -1,6 +1,5 @@
 #include "TransferDriver.h"
 #include "Chnl.h"
-#include "Debug.h"
 
 //Return 
 //	CHNL_SUCCESS	:同步模式，数据发送成功
@@ -13,19 +12,16 @@ TX_CODE Transfer_TxData(Transfer* pTransfer, uint8* pData, uint16 len)
 
 void Transfer_RxDataCallBack(Transfer* pTransfer, uint8* pData, uint16 len)
 {
-	Assert(pTransfer->m_pChnl);
-	Chnl_Event(pTransfer->m_pChnl, EVENT_RX_SUCCESS, pData, len);
+	Assert(pTransfer->RxData);
+	pTransfer->RxData(pTransfer->m_pArg, EVENT_RX_SUCCESS, pData, len);
 }
 
-void Transfer_Init(Transfer* pTransfer, Chnl* pChnl)
+void Transfer_Init(Transfer* pTransfer, RxCallBack rxFun, void* pArg)
 {
 	memset(pTransfer, 0, sizeof(Transfer));
 	
 	pTransfer->TxData = Transfer_TxData;
-	pTransfer->m_pChnl = pChnl;
+	pTransfer->m_pArg = pArg;
+	pTransfer->RxData = (RxCallBack)rxFun;
 }
-
-
-
-#endif
 

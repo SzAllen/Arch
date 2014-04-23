@@ -43,8 +43,8 @@ typedef enum _CHNL_RET
 struct _tagCrb;
 struct _tagChnl;
 
+typedef RSP_CODE (*CrbReqFun)(void* pDisptchArg, struct _tagCrb* pCrb, uint8* pReqData, uint16 reqLen);
 //逻辑通道,实现在通道上的传输数据包流控制
-typedef RSP_CODE (*ReqHandlerFun)(struct _tagCrb* pCrb, uint8* pReqData, uint16 reqLen, uint8* pRspData, uint16* rspLen);
 typedef struct _tagChnl
 {
 	MsgIf	m_Base;
@@ -58,18 +58,17 @@ typedef struct _tagChnl
 	
 	struct _tagCrb*    m_pCrbList;
 	struct _tagCrb*    m_pPendingCrbList;
-	struct _tagCrb*    m_pTxCrb;		//Point to TxData Crb;
 
 	MsgPostFun		PostMsg;
 	
-	ReqHandlerFun	ReqHandler;
-	void*			m_pDisptchArg;	//仅用于当接收到请求时，调用函数Disptch时使用
+	CrbReqFun	ReqHandler;
+	void*		m_pDisptchArg;	//仅用于当接收到请求时，调用函数Disptch时使用
 }Chnl;
 
-void Chnl_Init(Chnl* pChnl, uint8 ChnlID, const PktDesc* pPktDesc, MsgPostFun postMsg, Transfer* pTransfer);
+void Chnl_Init(Chnl* pChnl, uint8 ChnlID, const PktDesc* pPktDesc, MsgPostFun postMsg, Transfer* pTransfer, CrbReqFun ReqHandler, void*	pDisptchArg);
 Bool Chnl_SendCrb(Chnl* pChnl, struct _tagCrb* pCrb);
 void Chnl_AttachTransfer(Chnl* pChnl, Transfer* pDriver);
-int Chnl_Event(Chnl* pChnl, TransferEvent eventId, uint8* pData, uint16 len);
+CHNL_RET Chnl_Event(Chnl* pChnl, TransferEvent eventId, uint8* pData, uint16 len);
 void Chnl_AttachCrb(Chnl* pChnl, struct _tagCrb* pCrb);
 void Chnl_UnAttachCrb(Chnl* pChnl, struct _tagCrb* pCrb);
 void Chnl_CancelCrb(Chnl* pChnl, struct _tagCrb* pCrb);

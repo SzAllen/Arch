@@ -4,6 +4,7 @@
 #ifdef __cplusplus
 extern "C"{
 #endif
+#include "ArchDef.h"
 
 #define MAX_PFBUFF_SIZE 256
 typedef int (*PrintfFun)(const char* pszFormat, ...);

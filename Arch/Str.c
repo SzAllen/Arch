@@ -36,6 +36,19 @@ char* inet_n2a(uint32 ipAddr)
 	return ipStr;
 }
 
+int str_add(char* src, uint32 srcBufLen, const char* dst)
+{
+	if(srcBufLen > strlen(src) + strlen(dst))
+	{
+		memcpy(&src[strlen(src)], dst, strlen(dst));
+		return strlen(src) + strlen(dst);
+	}
+	else
+	{
+		return 0;
+	}
+}
+
 #ifdef CONFIG_STRING
 
 const char* strchr(const char* s, char c)

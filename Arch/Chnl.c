@@ -17,14 +17,17 @@ void Chnl_SetCrbToTxList(Chnl* pChnl, Crb* pCrb, Bool isToPendingList)
 		if(pChnl->m_pCrbList && List_isIn((List*)pChnl->m_pCrbList, (List*)pCrb))
 			pChnl->m_pCrbList = (Crb*)List_Remove((List*)pCrb);
 		
-		//Put crb in m_pTxCrbsList
+		//Put crb in m_pPendingCrbList
 		pChnl->m_pPendingCrbList = (Crb*)List_AddTail((List*)pChnl->m_pPendingCrbList, (List*)pCrb);
 	}
 	else
 	{
-		//Remove crb from m_pTxCrbsList
+		pCrb->m_isPending = False;
+		//Remove crb from m_pPendingCrbList
 		if(pChnl->m_pPendingCrbList && List_isIn((List*)pChnl->m_pPendingCrbList, (List*)pCrb))
+		{
 			pChnl->m_pPendingCrbList = (Crb*)List_Remove((List*)pCrb);
+		}
 		
 		//Put crb in m_pCrbList
 		pChnl->m_pCrbList = (Crb*)List_AddTail((List*)pChnl->m_pCrbList, (List*)pCrb);
@@ -42,7 +45,6 @@ void Chnl_AttachCrb(Chnl* pChnl, Crb* pCrb)
 	{
 		List_AddTail((List*)pChnl->m_pCrbList, (List*)pCrb);
 	}
-	
 }
 
 void Chnl_UnAttachCrb(Chnl* pChnl, Crb* pCrb)
@@ -54,69 +56,38 @@ void Chnl_UnAttachCrb(Chnl* pChnl, Crb* pCrb)
 void Chnl_AttachTransfer(Chnl* pChnl, Transfer* pTransfer)
 {
 	pChnl->m_pTransfer = pTransfer;
-	pTransfer->m_pChnl = pChnl;
+	pTransfer->m_pArg = pChnl;
 }
 
 static void Chnl_Ready(Chnl* pChnl)
 {
-	if(Null == pChnl->m_pTxCrb)
+	if(pChnl->m_pPendingCrbList && !pChnl->m_pPendingCrbList->m_isPending)
 	{
-		pChnl->m_pTxCrb = pChnl->m_pPendingCrbList;
-		
-		if(pChnl->m_pTxCrb)
-		{
-			Chnl_PostMsg(pChnl, CHNL_TXDATA, pChnl->m_pTxCrb, 0);
-		}
+		Chnl_PostMsg(pChnl, CHNL_TXDATA, (uint32)pChnl->m_pPendingCrbList, 0);
 	}
 }
 
 static Crb* Chnl_GetCrb(Chnl* pChnl, uint8* pData)
 {
-	Crb* pCrb = pChnl->m_pTxCrb;
-	List* pListNode = (List*)pChnl->m_pCrbList;
+	//Search the crb in m_pCrbList;
+	Crb* pCrb = Crb_GetMatch(pChnl->m_pCrbList, pData);
 	
-	if(pCrb && pCrb->IsMatch(pCrb, pData))
-	{			
-		return pCrb;
+	if(Null == pCrb)
+	{
+		//Search the crb in m_pPendingCrbList;
+		pCrb = Crb_GetMatch(pChnl->m_pPendingCrbList, pData);
 	}
 	
-	//Search the crb in m_pTxCrbsList;
-	while(pListNode)
-	{
-		pCrb = (Crb*)pListNode;
-		
-		if(pCrb->IsMatch(pCrb, pData))
-		{			
-			return pCrb;
-		}
-
-		pListNode = pListNode->m_pNext;
-	}
-
-	//Search the crb in m_pTxCrbsList;
-	pListNode = (List*)pChnl->m_pPendingCrbList;
-	while(pListNode)
-	{
-		pCrb = (Crb*)pListNode;
-		
-		if(pCrb->IsMatch(pCrb, pData))
-		{			
-			return pCrb;
-		}
-		
-		pListNode = pListNode->m_pNext;
-	}
-
-	return Null;
+	return pCrb;
 }
 
 //Chnl接收到数据
 CHNL_RET Chnl_Event(Chnl* pChnl, TransferEvent eventId, uint8* pData, uint16 len)
 {
 	int nRet = CHNL_SUCCESS;
-	Crb* pCrb = pChnl->m_pTxCrb;
+	Crb* pCrb = (pChnl->m_pPendingCrbList && pChnl->m_pPendingCrbList->m_isPending) ? pChnl->m_pPendingCrbList : Null;
 
-	PF(DL_CHNL, ("Chnl[0x%x] trigger event[%d]\n", eventId));	
+	PF(DL_CHNL, ("Chnl[0x%x] trigger event[%d]\n", pChnl->m_ChannelD, eventId));	
 	
 	if(pCrb)
 	{		
@@ -203,7 +174,6 @@ static CHNL_RET Chnl_MsgTimeOut(Chnl* pChnl, Crb* pCrb, uint32 param2)
 				PF_WARNING(("CRB_TX_REQ Timer out\n"));
 				pCrb->m_State = CRB_TX_REQ_FAILED;
 				pCrb->m_ErrorCode = CRB_TIMEOUT;
-				pChnl->m_pTxCrb = Null;
 				pCrb->CrbDone(pCrb);
 			}
 		}
@@ -215,7 +185,6 @@ static CHNL_RET Chnl_MsgTimeOut(Chnl* pChnl, Crb* pCrb, uint32 param2)
 			SET_CRB_TO_IDEL_LIST(pChnl, pCrb);
 			
 			PF_WARNING(("CRB_TX_RSP timerOut\n"));
-			pChnl->m_pTxCrb = Null;
 			pCrb->m_State = CRB_TX_RSP_FAILED;
 			pCrb->m_ErrorCode = CRB_TIMEOUT;
 			pCrb->CrbDone(pCrb);
@@ -231,7 +200,7 @@ static CHNL_RET Chnl_MsgTxDone(Chnl* pChnl, Crb* pCrb, CHNL_EVENT event)
 {
 	if(Null == pCrb)
 	{
-		PF_FAILED_STR("Arg error, pCrb=Null.\n");
+		PF_FAILED_STR(("Arg error, pCrb=Null.\n"));
 		return CHNL_SUCCESS;
 	}
 	
@@ -240,8 +209,7 @@ static CHNL_RET Chnl_MsgTxDone(Chnl* pChnl, Crb* pCrb, CHNL_EVENT event)
 		PF_FAILED_V1(pCrb->m_State);
 		return CHNL_SUCCESS;
 	}
-	
-	pChnl->m_pTxCrb = Null;
+
 	SET_CRB_TO_IDEL_LIST(pChnl, pCrb);
 	SwTimer_Stop(&pCrb->m_Timer);
 
@@ -272,7 +240,7 @@ static CHNL_RET Chnl_MsgTxDone(Chnl* pChnl, Crb* pCrb, CHNL_EVENT event)
 		
 		pCrb->CrbDone(pCrb);
 		Chnl_Ready(pChnl);
-		return;
+		return CHNL_SUCCESS;
 	}
 	
 	if(pCrb->m_IsForSendReq)
@@ -314,7 +282,7 @@ static CHNL_RET Chnl_MsgTxData(Chnl* pChnl, Crb* pCrb, uint32 param2)
 	{
 		pDataPkt = &pCrb->m_ReqCmd;
 	}
-	else(CRB_TX_RSP == pCrb->m_State)
+	else if(CRB_TX_RSP == pCrb->m_State)
 	{
 		pDataPkt = &pCrb->m_RspCmd;
 	}
@@ -324,18 +292,23 @@ static CHNL_RET Chnl_MsgTxData(Chnl* pChnl, Crb* pCrb, uint32 param2)
 	}
 
 	SwTimer_Stop(&pCrb->m_Timer);
-	
+
+	pCrb->m_isPending = True;
 	pCrb->m_bTxCount++;
+
 	nRet = pChnl->m_pTransfer->TxData(pChnl->m_pTransfer, (uint8*)pDataPkt->m_pData, pDataPkt->m_DataLen);
 	pCrb->m_State = CRB_WAIT_TX_RESULT;
 	
+	pChnl->m_DelayMsForRsp = Crb_GetWaitForRspTime(pCrb);
 	if(TX_SUCCESS == nRet)
 	{
-		Chnl_MsgTxDone(pChnl, (uint32)pCrb, CHNL_TX_SUCCESS);
+		//Chnl_MsgTxDone(pChnl, pCrb, CHNL_TX_SUCCESS);
+		Chnl_PostMsg(pChnl, CHNL_TX_SUCCESS, (uint32)pCrb, CHNL_TX_SUCCESS);
 	}
 	else if(TX_FAILED == nRet)
 	{
-		Chnl_MsgTxDone(pChnl, (uint32)pCrb, CHNL_TX_FAILED);
+		//Chnl_MsgTxDone(pChnl, pCrb, CHNL_TX_FAILED);
+		Chnl_PostMsg(pChnl, CHNL_TX_SUCCESS, (uint32)pCrb, CHNL_TX_FAILED);
 	}
 	else if(pChnl->m_DelayMsForTxData)
 	{
@@ -417,40 +390,22 @@ END:
 
 void Chnl_CancelCrb(Chnl* pChnl, Crb* pCrb)
 {
-	Bool bFlag = False;
 	List* node = Null;
-
-	if(pCrb == pChnl->m_pTxCrb)
-	{
-		pChnl->m_pTxCrb = Null;
-		bFlag = True;
-	}
-	else
-	{
-		for(node = (List*)pChnl->m_pPendingCrbList; node != Null; node = node->m_pNext)
-		{
-			if(node == (List*)pCrb)
-			{		
-				bFlag = True;
-				break;
-			}
-		}
-	}
+	
 	if(pCrb->m_State != CRB_INIT)
 	{
 		pCrb->m_State = CRB_CANCEL;
 		pCrb->CrbDone(pCrb);
 	}
 	
-	if(bFlag)
+	if(pCrb->m_isPending)
 	{
 		PF_WARNING(("%s()\n", _FUNC_));
 
 		Assert(List_isIn((List*)pChnl->m_pPendingCrbList, (List*)pCrb));
 		SET_CRB_TO_IDEL_LIST(pChnl, pCrb);
-		//Chnl_SetCrbToTxList(pChnl, pCrb, False);
 	}
-	
+
 	Chnl_Ready(pChnl);
 }
 
@@ -461,16 +416,15 @@ Bool Chnl_SendCrb(Chnl* pChnl, Crb* pCrb)
 		if(List_isIn((List*)pChnl->m_pPendingCrbList, (List*)pCrb)) return False;
 	}
 		
-	PF(DL_CHNL,("Chnl[%d] Send %s, count=%d"
+	PF(DL_CHNL,("Chnl[%d] Send %s, count=%d\n"
 		, pChnl->m_ChannelD, pCrb->m_IsForSendReq ? "REQ" : "RSP", pCrb->m_bTxCount));
 
 	SET_CRB_TO_TX_LIST(pChnl, pCrb);
 	
-	if(Null == pChnl->m_pTxCrb)
+	if(!pChnl->m_pPendingCrbList->m_isPending)
 	{
-		pChnl->m_pTxCrb = pCrb;
 		pCrb->m_State = pCrb->m_IsForSendReq ? CRB_TX_REQ : CRB_TX_RSP;
-		Chnl_MsgTxData(pChnl, (uint32)pCrb, 0);
+		Chnl_MsgTxData(pChnl, pCrb, 0);
 	}
 	
 	return True;
@@ -485,11 +439,10 @@ void Chnl_CmdDisptch(Chnl* pChnl, Crb* pCrb)
 
 	Assert(pChnl->ReqHandler);
 
-	nRet = pChnl->ReqHandler(pCrb, pReq->m_pData, pReq->m_DataLen, pRsp->m_pData, &nRspLen);
+	nRet = pChnl->ReqHandler(pChnl->m_pDisptchArg, pCrb, pReq->m_pData, pReq->m_DataLen);
 	if(RSP_SUCCESS == nRet)	//发送应答
 	{
 		Assert(pCrb->m_RspCmd.m_MaxLen >= pCrb->m_RspCmd.m_DataLen);
-		pCrb->CmdPacket(pCrb);
 		Chnl_SendCrb(pCrb->m_pChnl, pCrb);
 	}
 	else if(RSP_DISCARD == nRet)	//不响应，丢弃该命令
@@ -533,25 +486,17 @@ void Chnl_MsgHandler(Chnl* pChnl, uint8 msgID, uint32 param1, uint32 param2)
 
 void Chnl_Reset(Chnl* pChnl)
 {
-	List* node = Null;
-	Crb* pCrb = pChnl->m_pTxCrb;
+	Crb* pCrb = Null;
 	
 	PF(DL_MAIN, ("%s: ChnlID=%d\n", _FUNC_, pChnl->m_ChannelD));
-	if(pCrb)
-	{
-		pCrb->m_State = CRB_CANCEL;
-		pCrb->CrbDone(pCrb);
-	}
 	
-	for(node = (List*)pChnl->m_pPendingCrbList; node != Null; )
+	for(pCrb = pChnl->m_pPendingCrbList; pCrb != Null; pCrb = (Crb*)(((List*)pCrb)->m_pNext))
 	{
-		pCrb = (Crb*)node;
 		if(pCrb->m_State != CRB_INIT)
 		{
 			pCrb->m_State = CRB_CANCEL;
 			pCrb->CrbDone(pCrb);
 		}
-		node = node->m_pNext;
 		SET_CRB_TO_IDEL_LIST(pChnl, pCrb);
 	}
 }
@@ -564,10 +509,9 @@ void Chnl_Release(Chnl* pChnl)
 
 	List_RemoveAll((List*)pChnl->m_pCrbList);
 	List_RemoveAll((List*)pChnl->m_pPendingCrbList);
-	List_RemoveAll((List*)pChnl->m_pTxCrb);
 }
 
-void Chnl_Init(Chnl* pChnl, uint8 ChnlID, const PktDesc* pPktDesc, MsgPostFun postMsg, Transfer* pTransfer, ReqHandlerFun ReqHandler)
+void Chnl_Init(Chnl* pChnl, uint8 ChnlID, const PktDesc* pPktDesc, MsgPostFun postMsg, Transfer* pTransfer, CrbReqFun ReqHandler, void*	pDisptchArg)
 {
 	Assert(pPktDesc);
 
@@ -584,9 +528,10 @@ void Chnl_Init(Chnl* pChnl, uint8 ChnlID, const PktDesc* pPktDesc, MsgPostFun po
 	pChnl->m_DelayMsForTxData = 10;
 
 	pChnl->ReqHandler = ReqHandler;
+	pChnl->m_pDisptchArg = pDisptchArg;
 	
 	pChnl->m_pTransfer = pTransfer;
-	pTransfer->m_pChnl = pChnl;
+	pTransfer->m_pArg = pChnl;
 }
 
 void Chnl_VerifyReset(Chnl* pChnl)
@@ -594,7 +539,6 @@ void Chnl_VerifyReset(Chnl* pChnl)
 	PF(DL_MAIN, ("%s: channelNum=%d, crbCount=%d\n", _FUNC_, pChnl->m_ChannelD, List_Count((List*)pChnl->m_pCrbList)));
 	
 	AssertTrue(pChnl);
-	AssertTrue(pChnl->m_pTxCrb == Null);
 	AssertTrue(pChnl->m_pPendingCrbList == Null);
 	AssertTrue(pChnl->m_pCrbList);
 }

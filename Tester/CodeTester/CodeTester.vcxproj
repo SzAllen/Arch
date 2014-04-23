@@ -104,7 +104,10 @@
   <ItemGroup>
     <ClInclude Include="..\..\Arch\Arch.h" />
     <ClInclude Include="..\..\Arch\ArchDef.h" />
+    <ClInclude Include="..\..\Arch\Chnl.h" />
     <ClInclude Include="..\..\Arch\CmdLine.h" />
+    <ClInclude Include="..\..\Arch\Crb.h" />
+    <ClInclude Include="..\..\Arch\DataPkt.h" />
     <ClInclude Include="..\..\Arch\Debug.h" />
     <ClInclude Include="..\..\Arch\List.h" />
     <ClInclude Include="..\..\Arch\Message.h" />
@@ -132,7 +135,16 @@
     <ClCompile Include="..\..\Arch\Arch.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\..\Arch\Chnl.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\..\Arch\CmdLine.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\Arch\Crb.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\Arch\DataPkt.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\Arch\debug.c">

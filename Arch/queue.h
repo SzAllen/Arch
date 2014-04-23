@@ -25,7 +25,7 @@ typedef struct _Queue
     uint8* m_pBuffer;
 }Queue;
 
-//void* QUEUE_getNew(Queue* queue);
+void* QUEUE_getNew(Queue* queue);
 Bool QUEUE_addByte(Queue* queue, uint8 byte);
 Bool QUEUE_add(Queue* queue, const void* element, int len);
 Queue* QUEUE_create(int siz);

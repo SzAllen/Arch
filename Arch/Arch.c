@@ -66,7 +66,7 @@ void Arch_AddMsgIf(MsgIf* pMsgIf)
 	}
 }
 
-void Arch_RemoteMsgIf(MsgIf* pMsgIf)
+void Arch_RemoveMsgIf(MsgIf* pMsgIf)
 {
 	g_pArch->m_pMsgIfList = List_Remove((List*)pMsgIf);
 }
@@ -125,7 +125,7 @@ void Arch_Run()
 			UNLOCK();
 		}
 
-		for(pNode = (List*)&g_pArch->m_pMsgIfList; Null != pNode; pNode = pNode->m_pNext)
+		for(pNode = (List*)g_pArch->m_pMsgIfList; Null != pNode; pNode = pNode->m_pNext)
 		{
 			pMsgIf = (MsgIf*)pNode;
 			if(pMsgIf->Run)
@@ -157,6 +157,7 @@ int Arch_Init()
 	PF_FUN(DL_MAIN);
 	
 	Debug_Init();
+	//Shell_Init();
 	
 	TimerManager_Init(&g_pArch->m_TimerManager);
 	

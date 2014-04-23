@@ -107,6 +107,16 @@ int Osa_Recvfrom(uint32 hSocket, void* pBuff, int bufLen, int nFlags, struct soc
 }
 
 #elif defined (VXWORKS_VERSION_66)
+SEM_ID g_CriticalSection;
+
+int Osa_Init()
+{
+//	InitializeCriticalSection(&g_CriticalSection);
+	g_CriticalSection = semMCreate(SEM_Q_FIFO);
+
+	return 0;
+}
+
 int Osa_CreateTask(TaskFun task, void *p_arg, const char *pTaskName, uint32* pStkBuf, int stackSize)
 {
 	int32 tid;
@@ -127,10 +137,16 @@ int Osa_CreateTask(TaskFun task, void *p_arg, const char *pTaskName, uint32* pSt
 	return True;
 }
 
-int Osa_ioctrl(uint32 hSocket)
+int Osa_ioctrl(uint32 hSocket, int value)
 {
 	int sock_argp = 1;
 	return ioctl(hSocket, FIONBIO, &sock_argp);
+}
+
+int Osa_Recvfrom(uint32 hSocket, void* pBuff, int bufLen, int nFlags, struct sockaddr_in* pSocketAddr, int* pSocketAddrLen)
+{
+	Osa_ioctrl(hSocket,1);
+	return recvfrom(hSocket, (char*)pBuff, bufLen, nFlags, (struct sockaddr*)pSocketAddr, pSocketAddrLen);
 }
 #endif
 

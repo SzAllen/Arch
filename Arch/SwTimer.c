@@ -39,6 +39,7 @@ void SwTimer_Stop(SwTimer* pTimer)
 
 void SwTimer_Release(SwTimer* pTimer)
 {
+	TimerManager_RemoveTimer(pTimer);
 	memset(pTimer, 0, sizeof(SwTimer));
 }
 

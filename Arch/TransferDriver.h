@@ -26,17 +26,21 @@ typedef enum _TX_CODE
 
 struct _tagTransfer;
 typedef TX_CODE (*TransferFun)(struct _tagTransfer* pTransfer, uint8* pData, uint16 len);
+typedef int (*RxCallBack)(void* pChnl, TransferEvent eventId, uint8* pData, uint16 len);
+
 struct _tagChnl;
 typedef struct _tagTransfer
 {
-	struct _tagChnl* m_pChnl;
-    TransferFun 	 TxData;    
+    TransferFun 	 TxData; 
+	
+	void* 			m_pArg;
+	RxCallBack	 	RxData;
 }Transfer;
 
 TX_CODE Transfer_TxData(Transfer* pTransfer, uint8* pData, uint16 len);
 
 void Transfer_RxData(Transfer* pTransfer, uint8* pData, uint16 len);
-void Transfer_Init(Transfer* pTransfer, struct _tagChnl* pChnl);
+void Transfer_Init(Transfer* pTransfer, RxCallBack rxFun, void* pArg);
 
 
 #ifdef __cplusplus

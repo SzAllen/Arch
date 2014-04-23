@@ -189,6 +189,27 @@ int QUEUE_PushInEleArray(Queue* queue, const void* pEleArray, int nEleCount)
 	return nCount;
 }
 
+void* QUEUE_getNew(Queue* queue)
+{
+	void* pElement = &queue->m_pBuffer[queue->m_WritePointer];
+	
+	if(queue->m_isFull) return Null;
+	
+	queue->m_WritePointer += queue->m_nElementSize;
+	if(queue->m_WritePointer >= queue->m_nBufferSize)
+	{
+		queue->m_WritePointer = 0;
+	}
+	
+	queue->m_isEmpty = False;
+	if(queue->m_WritePointer == queue->m_ReadPointer)
+	{
+		queue->m_isFull = True;
+	}
+
+	return pElement;
+}
+
 Bool QUEUE_add(Queue* queue, const void* element, int len)
 {
 	if(queue->m_isFull || queue->m_nElementSize < len) return False;

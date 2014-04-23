@@ -49,7 +49,7 @@ Bool CmdLine_Parse(char* cmdLineStr, char** pFnName, char* pArgs[], int* argCoun
 		pArgs[(*argCount)++] = token;
 		if((*argCount) > maxArgCount)
 		{
-			Printf("Error: Arg count is too many\n");
+			Printf("PF_ERROR: Arg count is too many\n");
 			return False;
 		}
 		token = strtok( NULL, argSeps);
@@ -190,7 +190,7 @@ int CmdLine_AddStr(CmdLine* pCmdLine, const char* str, int len)
 			CmdLine_Reset(pCmdLine);
 		}
 		
-		if(pCmdLine->m_isEcho)
+		if(pCmdLine->m_isEcho && *str != KEY_ENTER)
 		{
 			if(0 == pCmdLine->m_CmdLineStrLen)
 			{
@@ -199,7 +199,10 @@ int CmdLine_AddStr(CmdLine* pCmdLine, const char* str, int len)
 			Printf("%c", *str);
 		}
 		
-		pCmdLine->m_CmdLineStr[pCmdLine->m_CmdLineStrLen++] = *str;
+		if(*str != KEY_ENTER)
+		{
+			pCmdLine->m_CmdLineStr[pCmdLine->m_CmdLineStrLen++] = *str;
+		}
 		if(KEY_ENTER == *str || ')' == *str)
 		{
 			char* pFnName = Null;
@@ -216,6 +219,7 @@ int CmdLine_AddStr(CmdLine* pCmdLine, const char* str, int len)
 					CmdLine_Exe(pCmdLine, pFnName, arg, argCount);
 				}
 			}
+
 			CmdLine_Reset(pCmdLine);
 	   	}
 	}
