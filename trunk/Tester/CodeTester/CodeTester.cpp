@@ -42,7 +42,6 @@ CCodeTesterApp::CCodeTesterApp()
 	//Unlock = MyUnlock;
 	//mSleep = (tSleep)mmsleep;
 
-
 }
 
 

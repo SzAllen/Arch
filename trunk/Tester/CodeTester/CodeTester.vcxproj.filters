@@ -105,6 +105,15 @@
     <ClInclude Include="..\..\Arch\ArchDef.h">
       <Filter>ArchCode</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Arch\Chnl.h">
+      <Filter>ArchCode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Arch\Crb.h">
+      <Filter>ArchCode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Arch\DataPkt.h">
+      <Filter>ArchCode</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -171,6 +180,15 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Arch\Osa.c">
+      <Filter>ArchCode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Arch\Chnl.c">
+      <Filter>ArchCode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Arch\Crb.c">
+      <Filter>ArchCode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Arch\DataPkt.c">
       <Filter>ArchCode</Filter>
     </ClCompile>
   </ItemGroup>

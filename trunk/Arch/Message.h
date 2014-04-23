@@ -19,7 +19,7 @@ typedef struct _tagMessage
 
 struct _tagMsgIf;
 typedef Bool (*MsgPostFun)(struct _tagMsgIf* pReceiver, uint32 msgID, uint32 param1, uint32 param2);
-typedef Bool (*MsgProcFun)(struct _tagMsgIf* pHandler, uint32 msgID, uint32 param1, uint32 param2);
+typedef int (*MsgProcFun)(struct _tagMsgIf* pHandler, uint32 msgID, uint32 param1, uint32 param2);
 typedef int (*MsgMapFun)(void* pHandler, uint32 param1, uint32 param2);
 typedef void (*RunFun)(void* pObj);
 

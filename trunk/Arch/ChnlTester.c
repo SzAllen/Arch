@@ -9,7 +9,7 @@ PktDesc g_PktDesc;
 
 void ChnlTester_init(MsgPostFun postMsg, Transfer * pTransfer)
 {
-	Chnl_Init(g_pChnl, 1, const PktDesc * pPktDesc, postMsg, pTransfer)
+	Chnl_Init(g_pChnl, 1, const PktDesc * pPktDesc, postMsg, pTransfer);
 }
 
 #endif	//f CHNL_TESTER

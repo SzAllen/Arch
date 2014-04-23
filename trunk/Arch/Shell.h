@@ -8,7 +8,7 @@ extern "C"{
 #endif
 
 void Shell_Init(void);
-void Shell_Input(const char* pStr);
+void Shell_Input(const char* pStr, int len);
 void Shell_GetArgCount();
 
 #ifdef __cplusplus

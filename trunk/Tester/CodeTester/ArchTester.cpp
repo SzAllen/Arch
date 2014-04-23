@@ -6,32 +6,37 @@
 
 Bool Tester_Shell_Arg1()
 {
+	const char* pStr = "Arg1(1)";
 	Shell_Init();
-	Shell_Input("Arg1(1)");
+	Shell_Input(pStr, strlen(pStr));
 	return True;
 }
 Bool Tester_Shell_Arg2()
 {
+	const char* pStr = "Arg2(1,0xFFFF)";
 	Shell_Init();
-	Shell_Input("Arg2(1,0xFFFF)");
+	Shell_Input(pStr, strlen(pStr));
 	return True;
 }
 Bool Tester_Shell_Arg3()
 {
+	const char* pStr = "Arg3(1,0xFFFF,0xFFFF)";
 	Shell_Init();
-	Shell_Input("Arg3(1,0xFFFF,0xFFFF)");
+	Shell_Input(pStr, strlen(pStr));
 	return True;
 }
 Bool Tester_Shell_Arg4()
 {
+	const char* pStr = "Arg4(0xFFF0,0xFFF1,0xFFF2,0xFFFFFFF3)";
 	Shell_Init();
-	Shell_Input("Arg4(0xFFF0,0xFFF1,0xFFF2,0xFFFFFFF3)");
+	Shell_Input(pStr, strlen(pStr));
 	return True;
 }
 Bool Tester_Shell_Arg5()
 {
+	const char* pStr = "Arg5(\"1\",0xFFFFFFFF,\"192.168.0.1\",0xFFFFFFFF, \"test\")";
 	Shell_Init();
-	Shell_Input("Arg5(\"1\",0xFFFFFFFF,\"192.168.0.1\",0xFFFFFFFF, \"test\")");
+	Shell_Input(pStr, strlen(pStr));
 	return True;
 }
 
@@ -43,8 +48,9 @@ Bool Tester_Shell_GetArgCount()
 
 Bool Tester_Shell_Help()
 {
+	const char* pStr = "?()";
 	Shell_Init();
-	Shell_Input("?()");
+	Shell_Input(pStr, strlen(pStr));
 	return True;
 }
 #endif

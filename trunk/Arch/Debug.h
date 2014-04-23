@@ -96,14 +96,14 @@ extern "C"{
 
 	#define SHELL(x) Printf x
 	
-	#define PF_WARNING(x) 	PF(DL_WARNING, x);
-	#define PF_ERROR(x) 	PF(DL_ERROR, x);
+	#define PF_WARNING(x) 	PF(DL_WARNING, ("WARNING: %s(),line=%d: ",_FUNC_, _LINE_)); PF(DL_WARNING, x);
+	#define PF_ERROR(x) 	PF(DL_ERROR, ("ERROR: %s(),line=%d:",_FUNC_, _LINE_)); PF(DL_ERROR, x);
 
 	#define PF_FUN(level) PF(level, ("%s(),line=%d\n",_FUNC_, _LINE_));
 	#define PF_LINE(level) PF(level, ("PF Line. %s,%s(),line=%d\n", __FILE__,__FUNCTION__,_LINE_))
 	#define PF_VAR(level, V1) 		PF(level, ("%s(),line=%d,%s=[0x%x](%d)\n",_FUNC_, _LINE_, #V1, V1, V1))
 	#define PF_FAILED() 		PF(DL_MAIN|DL_WARNING, ("%s() FAILED,line=%d.\n",_FUNC_, _LINE_))
-	#define PF_FAILED_STR(str) 		PF(DL_MAIN|DL_WARNING, ("%s() FAILED,line=%d. %s\n",_FUNC_, _LINE_, str))
+	#define PF_FAILED_STR(expr) 		PF(DL_WARNING, ("%s() FAILED,line=%d:",_FUNC_, _LINE_)); PF(DL_WARNING, expr);
 	#define PF_FAILED_V1(V1) 		PF(DL_MAIN|DL_WARNING, ("%s() FAILED,line=%d; %s=0x%x(%d).\n",_FUNC_, _LINE_, #V1, V1, V1))
 	
 //	#define PF_VAR(V1) 			Trace("%s(),line=%d,%s=[0x%02x](%d)\n", __FUNCTION__, _LINE_, #V1, V1, V1)

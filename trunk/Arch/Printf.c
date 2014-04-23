@@ -5,10 +5,6 @@
 	extern uint32_t UART_Send(LPC_USARTn_Type *UARTx, uint8_t *txbuf,	uint32_t buflen, TRANSFER_BLOCK_Type flag);
 #endif
 
-#ifdef WIN32
-PrintfFun TraceEx = Null;
-#endif
-
 #if CONFIG_PFSOCKET
 	#if DEFAULT_TO_STD
 	PrintfFun g_printFn = __Printf;
@@ -17,6 +13,10 @@ PrintfFun TraceEx = Null;
 	#endif
 #else
 	PrintfFun g_printFn = __Printf;
+#endif
+
+#ifdef WIN32
+PrintfFun TraceEx = Null;
 #endif
 
 int vsnprintfEx(char* buffer, int bufLen, const char* lpszFormat, va_list ptr)
@@ -37,7 +37,7 @@ int vsnprintfEx(char* buffer, int bufLen, const char* lpszFormat, va_list ptr)
 			nLen = sprintf(&buffer[i], "[%08x]:", GET_TICKS()) + i;
 		}
 		
-		if(strlen(lpszFormat) > 1)
+		if(strlen(lpszFormat) >= 1)
 		{
 			isNewLine = (lpszFormat[strlen(lpszFormat) - 1] == '\n');
 		}
