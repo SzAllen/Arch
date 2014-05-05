@@ -28,42 +28,35 @@ extern "C"{
 		, DL_SHOW_TICKS	= BIT_31
 		, DL_DEBUG		= 0xFFFFFFFF
 	};
-		
-	#define SHOW_IP(string,asUint32) 	Printf("%s = [%03d.%03d.%03d.%03d]\n"	\
-									, string	\
-									, MEM_BYTE(asUint32,0)	\
-									, MEM_BYTE(asUint32,1)	\
-									, MEM_BYTE(asUint32,2)	\
-									, MEM_BYTE(asUint32,3))
 
 	
-	#define Assert(expr) if(!(expr))	\
+	#define Assert(parenExpr) if(!(parenExpr))	\
 			{                                   \
-				Printf( "Assertion Failed! %s,%s,%s,line=%d\n", #expr,__FILE__,__FUNCTION__,_LINE_); 			\
+				Printf( "Assertion Failed! %s,%s,%s,line=%d\n", #parenExpr,__FILE__,__FUNCTION__,_LINE_); 			\
 				while(1){;}	\
 			}
 	
-	#define AssertTrue(expr) if(!(expr))	\
+	#define AssertTrue(parenExpr) if(!(parenExpr))	\
 			{                                   \
-				Printf( "*Test Failed*: %s, (%s)\n",__FUNCTION__, #expr);	\
+				Printf( "*Test Failed*: %s, (%s)\n",__FUNCTION__, #parenExpr);	\
 				while(1){;}	\
 			}	\
 			else	\
 			{	\
-				Printf( "Test Passed: %s, (%s)\n",__FUNCTION__, #expr);	\
+				Printf( "Test Passed: %s, (%s)\n",__FUNCTION__, #parenExpr);	\
 			}
 			
-	#define AssertFalse(expr) if((expr)) {                                   \
-			Printf( "Assertion Failed! %s,%s,%s,line=%d\n", #expr,__FILE__,__FUNCTION__,_LINE_); 			\
+	#define AssertFalse(parenExpr) if((parenExpr)) {                                   \
+			Printf( "Assertion Failed! %s,%s,%s,line=%d\n", #parenExpr,__FILE__,__FUNCTION__,_LINE_); 			\
 			while(1){;}	\
 			}
 	//#define Assert(x) if(!(x)){while(1){;}}
 	#define Trace Printf
-	#define PF(level, str) \
+	#define PF(level, parenExpr) \
 		{	\
 			if((level) &  g_dwDebugLevel)	\
 			{	\
-				Printf str;	\
+				Printf parenExpr;	\
 			}	\
 		}	
 
@@ -94,24 +87,18 @@ extern "C"{
 		}	\
 	}
 
-	#define SHELL(x) Printf x
+	#define SHELL(parenExpr) Printf parenExpr
 	
-	#define PF_WARNING(x) 	PF(DL_WARNING, ("WARNING: %s(),line=%d: ",_FUNC_, _LINE_)); PF(DL_WARNING, x);
-	#define PF_ERROR(x) 	PF(DL_ERROR, ("ERROR: %s(),line=%d:",_FUNC_, _LINE_)); PF(DL_ERROR, x);
+	#define PF_WARNING(parenExpr) 	PF(DL_WARNING, ("WARNING: %s(),line=%d: ",_FUNC_, _LINE_)); PF(DL_WARNING, parenExpr);
+	#define PF_ERROR(parenExpr) 	PF(DL_ERROR, ("ERROR: %s(),line=%d:",_FUNC_, _LINE_)); PF(DL_ERROR, parenExpr);
 
-	#define PF_FUN(level) PF(level, ("%s(),line=%d\n",_FUNC_, _LINE_));
-	#define PF_LINE(level) PF(level, ("PF Line. %s,%s(),line=%d\n", __FILE__,__FUNCTION__,_LINE_))
+	#define PF_FUN_LINE(level) PF(level, ("%s(),line=%d\n",_FUNC_, _LINE_));
+	#define PF_FILE_FUN_LINE(level) PF(level, ("PF Line. %s,%s(),line=%d\n", __FILE__,__FUNCTION__,_LINE_))
 	#define PF_VAR(level, V1) 		PF(level, ("%s(),line=%d,%s=[0x%x](%d)\n",_FUNC_, _LINE_, #V1, V1, V1))
 	#define PF_FAILED() 		PF(DL_MAIN|DL_WARNING, ("%s() FAILED,line=%d.\n",_FUNC_, _LINE_))
-	#define PF_FAILED_STR(expr) 		PF(DL_WARNING, ("%s() FAILED,line=%d:",_FUNC_, _LINE_)); PF(DL_WARNING, expr);
-	#define PF_FAILED_V1(V1) 		PF(DL_MAIN|DL_WARNING, ("%s() FAILED,line=%d; %s=0x%x(%d).\n",_FUNC_, _LINE_, #V1, V1, V1))
+	#define PF_FAILED_EXPR(parenExpr) 		PF(DL_WARNING, ("%s() FAILED,line=%d:",_FUNC_, _LINE_)); PF(DL_WARNING, parenExpr);
 	
-//	#define PF_VAR(V1) 			Trace("%s(),line=%d,%s=[0x%02x](%d)\n", __FUNCTION__, _LINE_, #V1, V1, V1)
-	#define PF_VAR2(level,V1,V2) 		PF((level), ("%s(),line=%d,%s=[0x%x](%d),%s=[0x%x](%d)\n", __FUNCTION__, _LINE_, #V1, V1, V1, #V2, V2, V2))
-	#define PF_VAR3(level,V1,V2,V3) 	PF((level), ("%s(),line=%d,%s=[0x%x](%d),%s=[0x%x](%d),%s=[0x%x](%d)\n", __FUNCTION__, _LINE_, #V1, V1, V1, #V2, V2, V2, #V3, V3, V3))
-//	#define PF_VAR4(V1,V2,V3,V4) Trace("%s(),line=%d,%s=[0x%02x](%d),%s=[0x%02x](%d),%s=[0x%02x](%d),%s=[0x%02x](%d)\n", __FUNCTION__, _LINE_, #V1, V1, V1, #V2, V2, V2, #V3, V3, V3, #V4, V4, V4)
-	#define WAIT(maxMS, expr) {int ms = 0; while(!(expr) && ms++ < (maxMS)) {SLEEP(1);}}
-	//#define PF_IP(level, asUint32)	PF(level, ("%s(),line=%d\n",_FUNC_, _LINE_));
+	#define WAIT(maxMS, parenExpr) {int ms = 0; while(!(parenExpr) && ms++ < (maxMS)) {SLEEP(1);}}
 
 #else	//#if XDEBUG
 	#define Debug_Init(...)
@@ -126,13 +113,10 @@ extern "C"{
 	#define PF_ERROR(...)
 	
 	#define PF(...)
-	#define PF_FUN(...)
-	#define PF_LINE(...)
+	#define PF_FUN_LINE(...)
+	#define PF_FILE_FUN_LINE(...)
 	#define PF_FAILED() (void)0
-	#define PF_FAILED_V1(...)
-	#define PF_VAR(...)
-	#define PF_VAR2(...)
-	#define PF_FAILED_STR(...)
+	#define PF_FAILED_EXPR(...)
 
 	#define Debug_DumpByteEx(...)
 	#define Debug_DumpByte(...)

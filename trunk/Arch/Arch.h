@@ -16,6 +16,7 @@ typedef struct _Arch
 	
 	List* m_pMsgIfList;
 	
+	SwTimer			m_TimerPool[MAX_TIMER_COUNT];
 	TimerManager	m_TimerManager;
 	
 	Queue	m_MsgQueue;
@@ -26,9 +27,14 @@ int Arch_Init(void);
 int Arch_Start(void);
 void Arch_Run(void);
 Bool Arch_PostMsg(void* pObj, uint32 msgID, uint32 param1, uint32 param2);
-void Arch_AddMsgIf(MsgIf* pMsgIf);
-void Arch_TimerStart(SwTimer* pTimer, uint8 timerId, uint32 value_ms, MsgIf* pMsgIf);
-void Arch_RemoveMsgIf(MsgIf* pMsgIf);
+
+void Arch_MsgIfAdd(MsgIf* pMsgIf);
+void Arch_MsgIfRemove(MsgIf* pMsgIf);
+
+void Arch_TimerRelease(uint8 timerId);
+Bool Arch_TimerIsStart(uint8 timerId);
+void Arch_TimerStop(uint8 timerId);
+void Arch_TimerStart(uint8 timerId, uint32 value_ms, MsgIf* pMsgIf);
 
 #ifdef __cplusplus
 }

@@ -1,22 +1,37 @@
-#include "ArchDef.h"
+#include "Arch.h"
 #include "Crb.h"
 #include "Debug.h"
 #include "Chnl.h"
 
 ////////////////////////////////////////////////////////////////////////////
 
-void Crb_TimerOut(SwTimer* pTimer, Crb* pCrb)
+void Crb_TimerStart(Crb* pCrb, uint8 timerId, uint32 value_ms)
+{
+	pCrb->m_TimerId = timerId;
+	Arch_TimerStart(pCrb->m_TimerId, value_ms, (MsgIf*)pCrb);
+}
+
+void Crb_TimerStop(Crb* pCrb)
+{
+	Arch_TimerStop(pCrb->m_TimerId);
+	pCrb->m_TimerId = INVALID_TIMER_ID;
+}
+
+void Crb_MsgTimerOut(Crb* pCrb, uint8 msgID, uint8 nTimeId, uint32 param2)
 {
 	Chnl* pChnl = pCrb->m_pChnl;
-		
+	
 	if(CRB_WAIT_RSP == pCrb->m_State
 		|| CRB_RX_REQ_SUCCESS == pCrb->m_State
 		|| CRB_TX_REQ == pCrb->m_State
 		|| CRB_TX_RSP == pCrb->m_State
 		)
 	{
+		//Chnl_MsgHandler(pChnl, CHNL_TIMEOUT, (uint32)pCrb, 0);
 		pChnl->PostMsg((MsgIf*)pChnl, CHNL_TIMEOUT, (uint32)pCrb, (uint32)0);	
 	}
+
+	Crb_TimerStop(pCrb);
 }
 
 uint32 Crb_GetWaitForRspTime(Crb* pCrb)
@@ -214,8 +229,8 @@ void Crb_ReSendCurrentReq(Crb* pCrb)
 void Crb_Done(Crb* pCrb)
 {
 	Queue* pReqDataQueue = &pCrb->m_CmdPacketQueue;
-	
-	SwTimer_Stop(&pCrb->m_Timer);
+
+	Crb_TimerStop(pCrb);
 
 	if(pCrb->m_IsForSendReq)
 	{
@@ -293,7 +308,7 @@ void Crb_Reset(Crb* pCrb)
 	{
 	}
 	
-	SwTimer_Stop(&pCrb->m_Timer);
+	Crb_TimerStop(pCrb);
 
 	Chnl_CancelCrb(pCrb->m_pChnl, pCrb);
 	
@@ -321,9 +336,19 @@ void Crb_Release(Crb* pCrb)
 	pCrb->Reset(pCrb);
 	Chnl_UnAttachCrb(pCrb->m_pChnl, pCrb);
 	
-	SwTimer_Release(&pCrb->m_Timer);
+	Arch_TimerRelease(pCrb->m_TimerId);
 
 	memset(pCrb, 0, sizeof(Crb));	
+}
+
+int Crb_MsgProc(Crb* pCrb, uint32 msgID, uint32 param1, uint32 param2)
+{
+	const MsgMap msgTbl[] = 
+	{
+		{MSG_TIMEOUT, (MsgMapFun)Crb_MsgTimerOut}
+	};
+
+	return MsgIf_MsgProc((MsgIf*)pCrb, msgID, param1, param2, msgTbl, sizeof(msgTbl)/sizeof(MsgMap));
 }
 
 void Crb_Init(Crb* pCrb
@@ -338,7 +363,6 @@ void Crb_Init(Crb* pCrb
 	, int 		queueBufSize
 	
 	, Chnl* 	pChnl
-	, TimerManager* pTm
 	, Bool 		isForSendReq
 	)
 {
@@ -347,10 +371,16 @@ void Crb_Init(Crb* pCrb
 	DataPkt* pCmd = Null;
 	uint16 nLen = 0;
 	uint16 cmdSize = pChnl->m_pPktDesc->m_MaxLen;
+	MsgIf* pMsgIf = (MsgIf*)pCrb;
 
 	Assert(cmdSize > 0);
 	Assert(bufLen == cmdSize);
 	Assert(queueBufSize == ReqArrayCount * cmdSize);
+
+	memset(pCrb, 0, sizeof(Crb));
+
+	MsgIf_Init(pMsgIf, (MsgProcFun)Crb_MsgProc, Null);
+	Arch_MsgIfAdd(pMsgIf);
 	
 	pCrb->m_State 	= CRB_INIT;
 	pCrb->m_pChnl = pChnl;
@@ -379,11 +409,7 @@ void Crb_Init(Crb* pCrb
 	}
 
 	Chnl_AttachCrb(pChnl, pCrb);
-	
-	//初始化定时器
-	SwTimer_Init(&pCrb->m_Timer, (TimeoutFun)Crb_TimerOut, pCrb);
-	TimerManager_AddTimer(pTm, &pCrb->m_Timer);
-	
+		
 	pCrb->IsMatch 	= Crb_IsMatch;
 	pCrb->CrbDone 	= Crb_Done;
 	pCrb->Reset 	= Crb_Reset;

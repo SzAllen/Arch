@@ -200,18 +200,19 @@ static CHNL_RET Chnl_MsgTxDone(Chnl* pChnl, Crb* pCrb, CHNL_EVENT event)
 {
 	if(Null == pCrb)
 	{
-		PF_FAILED_STR(("Arg error, pCrb=Null.\n"));
+		PF_FAILED_EXPR(("Arg error, pCrb=Null.\n"));
 		return CHNL_SUCCESS;
 	}
 	
 	if(CRB_WAIT_TX_RESULT != pCrb->m_State)
 	{
-		PF_FAILED_V1(pCrb->m_State);
+		PF_FAILED_EXPR(("State[%d] error.\n", pCrb->m_State));
 		return CHNL_SUCCESS;
 	}
 
 	SET_CRB_TO_IDEL_LIST(pChnl, pCrb);
-	SwTimer_Stop(&pCrb->m_Timer);
+
+	Crb_TimerStop(pCrb);
 
 	if(event == CHNL_TX_FAILED)
 	{
@@ -250,7 +251,7 @@ static CHNL_RET Chnl_MsgTxDone(Chnl* pChnl, Crb* pCrb, CHNL_EVENT event)
 		//Start a timer to wait the response.
 		if(pChnl->m_DelayMsForRsp)
 		{
-			SwTimer_Start(&pCrb->m_Timer, TIMER_TX_REQ, pChnl->m_DelayMsForRsp);
+			Crb_TimerStart(pCrb, TIMER_TX_REQ, pChnl->m_DelayMsForRsp);
 		}
 		else
 		{
@@ -291,7 +292,7 @@ static CHNL_RET Chnl_MsgTxData(Chnl* pChnl, Crb* pCrb, uint32 param2)
 		return CHNL_SUCCESS;
 	}
 
-	SwTimer_Stop(&pCrb->m_Timer);
+	Crb_TimerStop(pCrb);
 
 	pCrb->m_isPending = True;
 	pCrb->m_bTxCount++;
@@ -312,7 +313,7 @@ static CHNL_RET Chnl_MsgTxData(Chnl* pChnl, Crb* pCrb, uint32 param2)
 	}
 	else if(pChnl->m_DelayMsForTxData)
 	{
-		SwTimer_Start(&pCrb->m_Timer, TIMER_TX_DATA, pChnl->m_DelayMsForTxData);
+		Crb_TimerStart(pCrb, TIMER_TX_DATA, pChnl->m_DelayMsForTxData);
 	}
 	else
 	{

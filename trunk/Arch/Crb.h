@@ -12,6 +12,7 @@ extern "C"{
 #include "queue.h"
 
 #include "List.h"
+#include "Message.h"
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -78,7 +79,7 @@ typedef Bool (*CrbDataHandleFun)(struct _tagCrb* pCrb, void* pData, uint16 nLen)
 //Cmd request block
 typedef struct _tagCrb
 {
-	List		m_Base;
+	MsgIf		m_Base;
 	
 	uint8		m_isPending:1;		//Crb Is pending
 	uint8		m_MaxSendCount:3;	//The max re-send count, the max value is 8
@@ -93,7 +94,7 @@ typedef struct _tagCrb
 	DataPkt		m_ReqCmd;
 	DataPkt		m_RspCmd;
 
-	SwTimer		m_Timer;
+	uint8		m_TimerId;
 	
 	Queue		m_CmdPacketQueue;	//”√”⁄≈≈∂”CmdPacket
 
@@ -116,7 +117,6 @@ void Crb_Init(Crb* pCrb
 	, uint8*	pReqQueueBuf
 	, int 		queueBufSize
 	, struct _tagChnl* 	pChnl
-	, TimerManager* pTm
 	, Bool 		isForSendReq
 	);
 
@@ -139,6 +139,9 @@ void Crb_Release(Crb* pCrb);
 void Crb_ReSendCurrentReq(Crb* pCrb);
 Crb* Crb_GetMatch(Crb* pCrbList, uint8* pData);
 uint32 Crb_GetWaitForRspTime(Crb* pCrb);
+
+void Crb_TimerStop(Crb* pCrb);
+void Crb_TimerStart(Crb* pCrb, uint8 timerId, uint32 value_ms);
 
 #ifdef __cplusplus
 }

@@ -6,6 +6,7 @@ extern "C"{
 #endif
 
 #define MAX_MSG_COUNT	60	//Message queue deepth
+#define MAX_TIMER_COUNT	16
 #define MS_STICKS 		16	//Hot many ticks per ms, it is for timer
 #define TIMER_TASK_INTERVAL 1
 
