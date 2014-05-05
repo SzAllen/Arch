@@ -8,7 +8,7 @@ void SwTimer_Init(SwTimer* pTimer, TimeoutFun timeout, void* pContext)
 	pTimer->m_base.m_isUsed = 1;
 	pTimer->m_context = pContext;
 	pTimer->timeout = timeout;
-	pTimer->m_bTimerId = 0;
+	pTimer->m_nTimerId = 0;
 }
 
 void SwTimer_Start(SwTimer* pTimer, uint8 timerId, uint32 value_ms)
@@ -20,10 +20,10 @@ void SwTimer_Start(SwTimer* pTimer, uint8 timerId, uint32 value_ms)
 	{
 		pTimer->m_dwInitTicks = pTimer->m_pTimerManager->m_ticks;
 	}
-	pTimer->m_bTimerId = timerId;
+	pTimer->m_nTimerId = timerId;
 	pTimer->m_isStart = 1;
 
-	PF(DL_TIMER,("Init Timer(ID=%d), Timerout ticks=%d, initTicks=0x%08x\n", pTimer->m_bTimerId, pTimer->m_dwTimeoutTicks, pTimer->m_dwInitTicks));
+	PF(DL_TIMER,("Init Timer(ID=%d), Timerout ticks=%d, initTicks=0x%08x\n", pTimer->m_nTimerId, pTimer->m_dwTimeoutTicks, pTimer->m_dwInitTicks));
 }
 
 void SwTimer_ReStart(SwTimer* pTimer)
@@ -82,7 +82,38 @@ void SwTimer_Reset(SwTimer* pTimer)
 
 uint8 SwTimer_GetId(SwTimer* pTimer)
 {
-	return pTimer->m_bTimerId;
+	return pTimer->m_nTimerId;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+SwTimer* TimerArray_New(SwTimer* pTimerArray, int nCount)
+{
+	int i = 0; 
+
+	for(i = 0; i < nCount; i++, pTimerArray++)
+	{
+		if(!pTimerArray->m_base.m_isUsed)
+		{
+			return pTimerArray;
+		}
+	}
+
+	return Null;
+}
+
+SwTimer* TimerArray_Get(SwTimer* pTimerArray, int nCount, uint8 timerId)
+{
+	int i = 0; 
+
+	for(i = 0; i < nCount; i++, pTimerArray++)
+	{
+		if(pTimerArray->m_nTimerId == timerId)
+		{
+			return pTimerArray;
+		}
+	}
+
+	return Null;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -139,6 +170,7 @@ void TimerManager_Run(TimerManager* pTm, uint32 ticks)
 	//TimerManager* pTm = GetTimerManager();
 	List* pListNode = (List*)pTm->m_timerList;
 	SwTimer* pTimer = (SwTimer*)pListNode;
+	Bool isTimeOut = False;
 
 	pTm->m_ticks = ticks;
 	
@@ -149,18 +181,26 @@ void TimerManager_Run(TimerManager* pTm, uint32 ticks)
 	
 	do
 	{
+		isTimeOut = False;
 		if(SwTimer_isStart(pTimer))
 		{
 			if(SwTimer_isTimerOut(pTimer, ticks))
 			{
-				SwTimer_Stop(pTimer);
+				//SwTimer_Stop(pTimer);
+				
+				isTimeOut = True;
+				//Save the pListNode->pNext before calling SwTimer_TimerOut(), pListNode may be destoryed at SwTimer_TimerOut()
+				pListNode = pListNode->m_pNext;	
 				SwTimer_TimerOut(pTimer);
 			}
 		}
-		
-		pListNode = pListNode->m_pNext;
+
+		if(!isTimeOut)
+		{
+			pListNode = pListNode->m_pNext;
+		}
 		pTimer = (SwTimer*)pListNode;
 		
-	}while(pListNode);
+	}while(pTimer);
 	
 }
